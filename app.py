@@ -12,7 +12,8 @@ from langchain_core.prompts import ChatPromptTemplate
 
 # --- CONSTANTES Y CONFIGURACIÓN ---
 DOWNLOAD_DIR = "downloads"
-MODEL_NAME = "llama3-70b-8192"
+# ACTUALIZADO: Usamos el nuevo modelo soportado por Groq
+MODEL_NAME = "llama-3.3-70b-versatile"
 
 st.set_page_config(page_title="Agente Investigador Seguro", page_icon="🕵️‍♂️")
 
@@ -27,7 +28,7 @@ def save_to_file(content: str, filename: str) -> str:
     Guarda texto en un archivo local dentro del directorio seguro 'downloads'.
     Args:
         content: El contenido de texto a guardar.
-        filename: El nombre del archivo deseado (se sanitizará automáticamnete).
+        filename: El nombre del archivo deseado (se sanitizará automáticamente).
     """
     try:
         # SEGURIDAD: Sanitizar el nombre del archivo para evitar Path Traversal
@@ -133,9 +134,10 @@ def main():
 
                 # Verificación opcional: Mostrar archivos generados recientemente
                 if "guardado" in output_text.lower():
-                    files = os.listdir(DOWNLOAD_DIR)
-                    if files:
-                        st.success(f"Archivos disponibles en ./{DOWNLOAD_DIR}: {', '.join(files)}")
+                    if os.path.exists(DOWNLOAD_DIR):
+                        files = os.listdir(DOWNLOAD_DIR)
+                        if files:
+                            st.success(f"Archivos disponibles en ./{DOWNLOAD_DIR}: {', '.join(files)}")
 
             except Exception as e:
                 st.error(f"Ocurrió un error durante la ejecución: {e}")
