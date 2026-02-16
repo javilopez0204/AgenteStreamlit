@@ -1,11 +1,14 @@
 streamlit
-# Actualizamos todo el bloque de LangChain a versiones recientes y compatibles
-langchain>=0.2.10
-langchain-community>=0.2.10
-langchain-core>=0.2.20
-# Librerías de Google actualizadas
-langchain-google-genai>=1.0.7
-google-generativeai>=0.7.0
+# Núcleo de LangChain compatible
+langchain==0.3.7
+langchain-community==0.3.5
+langchain-core==0.3.15
+langchain-text-splitters==0.3.2
+
+# Integración Google actualizada
+langchain-google-genai==2.0.4
+google-generativeai==0.8.3
+
 # Utilidades
 wikipedia
-pydantic>=2.0
+pydantic>=2.9.0
