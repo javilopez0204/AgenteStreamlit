@@ -10,6 +10,16 @@ from langchain_core.tools import tool, BaseTool
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate
 
+import asyncio
+
+# --- PARCHE PARA ASYNCIO EN STREAMLIT ---
+try:
+    asyncio.get_running_loop()
+except RuntimeError:
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+# ----------------------------------------
+
 # --- CONSTANTES Y CONFIGURACIÓN ---
 DOWNLOAD_DIR = "downloads"
 # Usamos Gemini 1.5 Flash que es excelente para tareas rápidas y gratuito
