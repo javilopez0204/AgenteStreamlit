@@ -1,8 +1,8 @@
 streamlit
-# Fijamos versiones estables de la serie 0.1.x para evitar conflictos de ruptura
+# Mantenemos tus versiones base de LangChain (0.1.x)
 langchain==0.1.20
 langchain-community==0.0.38
 langchain-core==0.1.52
-langchain-groq==0.1.3
+langchain-google-genai
 wikipedia
 pydantic>=2.0

@@ -2,8 +2,8 @@ import streamlit as st
 import os
 from typing import List
 
-# Third-party imports
-from langchain_groq import ChatGroq
+# --- NUEVAS IMPORTACIONES PARA GOOGLE ---
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.tools import WikipediaQueryRun
 from langchain_community.utilities import WikipediaAPIWrapper
 from langchain_core.tools import tool, BaseTool
@@ -12,12 +12,12 @@ from langchain_core.prompts import ChatPromptTemplate
 
 # --- CONSTANTES Y CONFIGURACIÓN ---
 DOWNLOAD_DIR = "downloads"
-# ACTUALIZADO: Usamos el nuevo modelo soportado por Groq
-MODEL_NAME = "llama-3.3-70b-versatile"
+# Usamos Gemini 1.5 Flash que es excelente para tareas rápidas y gratuito
+# Opciones: "gemini-1.5-flash" o "gemini-1.5-pro"
+MODEL_NAME = "gemini-1.5-flash" 
 
-st.set_page_config(page_title="Agente Investigador Seguro", page_icon="🕵️‍♂️")
+st.set_page_config(page_title="Agente Investigador Gemini", page_icon="🤖")
 
-# Asegurar que el directorio de descargas existe
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 # --- DEFINICIÓN DE HERRAMIENTAS ---
@@ -31,7 +31,6 @@ def save_to_file(content: str, filename: str) -> str:
         filename: El nombre del archivo deseado (se sanitizará automáticamente).
     """
     try:
-        # SEGURIDAD: Sanitizar el nombre del archivo para evitar Path Traversal
         safe_filename = os.path.basename(filename)
         if not safe_filename:
             safe_filename = "resultado_agente.txt"
@@ -46,65 +45,65 @@ def save_to_file(content: str, filename: str) -> str:
         return f"Error crítico al guardar el archivo: {str(e)}"
 
 def get_tools() -> List[BaseTool]:
-    """Inicializa y retorna la lista de herramientas disponibles."""
     api_wrapper = WikipediaAPIWrapper(top_k_results=1, doc_content_chars_max=2000)
     wiki_tool = WikipediaQueryRun(api_wrapper=api_wrapper)
     return [wiki_tool, save_to_file]
 
 # --- LÓGICA DEL AGENTE (CACHEADA) ---
 
-@st.cache_resource(show_spinner="Iniciando Agente IA...")
+@st.cache_resource(show_spinner="Iniciando Agente Gemini...")
 def init_agent(api_key: str):
     """
-    Inicializa el LLM y el Agente. Usamos cache_resource para evitar 
-    recrear el objeto en cada rerun de Streamlit.
+    Inicializa el LLM de Google y el Agente.
     """
-    llm = ChatGroq(
-        groq_api_key=api_key,
-        model_name=MODEL_NAME,
-        temperature=0
+    # Configuramos el modelo de Google
+    llm = ChatGoogleGenerativeAI(
+        model=MODEL_NAME,
+        google_api_key=api_key,
+        temperature=0,
+        max_output_tokens=8192
     )
 
     tools = get_tools()
 
     prompt = ChatPromptTemplate.from_messages([
         ("system", 
-         "Eres un asistente de investigación riguroso. Tu objetivo es buscar información precisa en Wikipedia. "
-         "Si el usuario pide guardar información, USA la herramienta 'save_to_file'. "
-         "Nunca inventes nombres de archivos fuera de contexto."),
+         "Eres un asistente de investigación experto y riguroso impulsado por Gemini. "
+         "Tu objetivo es buscar información precisa en Wikipedia. "
+         "Si encuentras la información relevante y el usuario pidió guardarla, DEBES usar la herramienta 'save_to_file'. "
+         "Proporciona nombres de archivo descriptivos (ej: 'biografia_turing.txt')."),
         ("human", "{input}"),
         ("placeholder", "{agent_scratchpad}"),
     ])
 
+    # create_tool_calling_agent funciona nativamente con Gemini
     agent = create_tool_calling_agent(llm, tools, prompt)
     return AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=True)
 
 # --- INTERFAZ DE USUARIO ---
 
 def main():
-    st.title("🕵️‍♂️ Agente: Wikipedia a Archivo Seguro")
+    st.title("🤖 Agente: Wikipedia + Gemini")
 
     # Sidebar
     with st.sidebar:
-        st.header("Configuración")
-        groq_api_key = st.text_input("Groq API Key", type="password")
-        st.markdown("[Consigue tu API Key aquí](https://console.groq.com/keys)")
+        st.header("Configuración de Google")
+        google_api_key = st.text_input("Google AI Studio Key", type="password")
+        st.markdown("[Obtén tu API Key gratuita aquí](https://aistudio.google.com/app/apikey)")
         
-        # Botón para limpiar historial
         if st.button("Limpiar Historial"):
             st.session_state.messages = []
             st.rerun()
 
     # Validación de API Key
-    if not groq_api_key:
-        st.info("👈 Por favor, introduce tu API Key de Groq para comenzar.")
+    if not google_api_key:
+        st.info("👈 Introduce tu API Key de Google AI Studio para comenzar.")
         return
 
-    # Inicialización del Agente (Solo se ejecuta una vez gracias al caché)
     try:
-        agent_executor = init_agent(groq_api_key)
+        agent_executor = init_agent(google_api_key)
     except Exception as e:
-        st.error(f"Error al inicializar el agente. Verifica tu API Key. Detalles: {e}")
+        st.error(f"Error al conectar con Google Gemini. Detalles: {e}")
         return
 
     # Historial de Chat
@@ -116,7 +115,7 @@ def main():
             st.markdown(message["content"])
 
     # Input del Usuario
-    if prompt_input := st.chat_input("Ej: Busca sobre 'Alan Turing' y guarda un resumen"):
+    if prompt_input := st.chat_input("Ej: Investiga sobre la 'Computación Cuántica' y guarda un resumen"):
         
         st.session_state.messages.append({"role": "user", "content": prompt_input})
         with st.chat_message("user"):
@@ -124,23 +123,22 @@ def main():
 
         with st.chat_message("assistant"):
             try:
-                # Usamos un spinner para mejor UX
-                with st.spinner("Investigando y procesando..."):
+                with st.spinner("Gemini está investigando..."):
                     response = agent_executor.invoke({"input": prompt_input})
                     output_text = response["output"]
                 
                 st.markdown(output_text)
                 st.session_state.messages.append({"role": "assistant", "content": output_text})
 
-                # Verificación opcional: Mostrar archivos generados recientemente
-                if "guardado" in output_text.lower():
+                # Verificación de archivos
+                if "guardado" in output_text.lower() or "archivo" in output_text.lower():
                     if os.path.exists(DOWNLOAD_DIR):
                         files = os.listdir(DOWNLOAD_DIR)
                         if files:
-                            st.success(f"Archivos disponibles en ./{DOWNLOAD_DIR}: {', '.join(files)}")
+                            st.success(f"📂 Archivos en carpeta segura: {', '.join(files)}")
 
             except Exception as e:
-                st.error(f"Ocurrió un error durante la ejecución: {e}")
+                st.error(f"Error durante la ejecución: {e}")
 
 if __name__ == "__main__":
     main()
