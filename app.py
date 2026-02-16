@@ -7,7 +7,7 @@ from typing import List
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.tools import WikipediaQueryRun
 from langchain_community.utilities import WikipediaAPIWrapper
-from langchain_community.callbacks import StreamlitCallbackHandler # <--- MEJORA VISUAL
+from langchain_community.callbacks import StreamlitCallbackHandler
 from langchain_core.tools import tool, BaseTool
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate
@@ -23,7 +23,7 @@ except RuntimeError:
 
 # --- CONSTANTES ---
 DOWNLOAD_DIR = "downloads"
-MODEL_NAME = "gemini-2.0-flash"  # El modelo más rápido y actual
+MODEL_NAME = "gemini-2.0-flash"  # Modelo rápido y actual
 
 st.set_page_config(page_title="Agente Investigador Gemini", page_icon="🤖")
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
@@ -118,25 +118,45 @@ def main():
 
         with st.chat_message("assistant"):
             try:
-                # --- AQUÍ ESTÁ LA MEJORA VISUAL ---
-                # Esto muestra los pasos internos (Pensando -> Buscando -> Guardando)
+                # Callback para ver el proceso de pensamiento
                 st_callback = StreamlitCallbackHandler(st.container())
                 
                 response = agent_executor.invoke(
                     {"input": prompt_input},
                     {"callbacks": [st_callback]}
                 )
-                # ----------------------------------
                 
                 output_text = response["output"]
                 st.markdown(output_text)
                 st.session_state.messages.append({"role": "assistant", "content": output_text})
 
-                # Notificación de archivos
-                if os.path.exists(DOWNLOAD_DIR) and os.listdir(DOWNLOAD_DIR):
-                     # Solo mostramos mensaje si se menciona que se guardó algo recientemente
-                    if "guardad" in output_text.lower():
-                        st.success(f"📂 Archivos disponibles en carpeta '{DOWNLOAD_DIR}'")
+                # --- NUEVA LÓGICA DE DESCARGA ---
+                # Detectamos si se ha guardado algo y ofrecemos el archivo más reciente
+                if "guardad" in output_text.lower() or "archivo" in output_text.lower():
+                    if os.path.exists(DOWNLOAD_DIR):
+                        files = os.listdir(DOWNLOAD_DIR)
+                        if files:
+                            # Encontrar el archivo más nuevo en la carpeta
+                            latest_file_path = max(
+                                [os.path.join(DOWNLOAD_DIR, f) for f in files], 
+                                key=os.path.getctime
+                            )
+                            latest_filename = os.path.basename(latest_file_path)
+
+                            # Leer el archivo para el botón
+                            with open(latest_file_path, "r", encoding="utf-8") as f:
+                                file_content = f.read()
+
+                            st.success(f"✅ Archivo generado: {latest_filename}")
+                            
+                            # Botón de descarga
+                            st.download_button(
+                                label=f"⬇️ Descargar {latest_filename}",
+                                data=file_content,
+                                file_name=latest_filename,
+                                mime="text/plain"
+                            )
+                # --------------------------------
 
             except Exception as e:
                 st.error(f"Ocurrió un error: {e}")
