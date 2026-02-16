@@ -1,8 +1,9 @@
 streamlit
-# Mantenemos tus versiones base de LangChain (0.1.x)
-langchain==0.1.20
-langchain-community==0.0.38
-langchain-core==0.1.52
-langchain-google-genai
+langchain
+langchain-community
+langchain-core
+# Estas dos son las importantes para Gemini 2.0:
+langchain-google-genai>=2.0.0
+google-generativeai>=0.7.0
 wikipedia
-pydantic>=2.0
+pydantic

@@ -24,7 +24,7 @@ except RuntimeError:
 DOWNLOAD_DIR = "downloads"
 # Usamos Gemini 1.5 Flash que es excelente para tareas rápidas y gratuito
 # Opciones: "gemini-1.5-flash" o "gemini-1.5-pro"
-MODEL_NAME = "gemini-1.5-flash" 
+MODEL_NAME = "gemini-2.0-flash" 
 
 st.set_page_config(page_title="Agente Investigador Gemini", page_icon="🤖")
 
