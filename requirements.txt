@@ -1,9 +1,11 @@
 streamlit
-langchain
-langchain-community
-langchain-core
-# Estas dos son las importantes para Gemini 2.0:
-langchain-google-genai>=2.0.0
+# Actualizamos todo el bloque de LangChain a versiones recientes y compatibles
+langchain>=0.2.10
+langchain-community>=0.2.10
+langchain-core>=0.2.20
+# Librerías de Google actualizadas
+langchain-google-genai>=1.0.7
 google-generativeai>=0.7.0
+# Utilidades
 wikipedia
-pydantic
+pydantic>=2.0
